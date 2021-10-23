@@ -1,0 +1,128 @@
+---
+title: "hook analysis"
+output: html_notebook
+---
+
+loading packages
+```{r}
+library(readxl)
+library(tidyverse)
+library(RColorBrewer)
+library(ggpubr)
+library(cowplot)
+```
+
+loading data
+```{r}
+df <- read_excel("20210324_hook_results.xlsx")
+```
+
+defining function to summarize data
+```{r}
+## Summarizes data.
+## Gives count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
+##   data: a data frame.
+##   measurevar: the name of a column that contains the variable to be summariezed
+##   groupvars: a vector containing names of columns that contain grouping variables
+##   na.rm: a boolean that indicates whether to ignore NA's
+##   conf.interval: the percent range of the confidence interval (default is 95%)
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+    library(plyr)
+
+    # New version of length which can handle NA's: if na.rm==T, don't count them
+    length2 <- function (x, na.rm=FALSE) {
+        if (na.rm) sum(!is.na(x))
+        else       length(x)
+    }
+
+    # This does the summary. For each group's data frame, return a vector with
+    # N, mean, and sd
+    datac <- ddply(data, groupvars, .drop=.drop,
+      .fun = function(xx, col) {
+        c(N    = length2(xx[[col]], na.rm=na.rm),
+          mean = mean   (xx[[col]], na.rm=na.rm),
+          sd   = sd     (xx[[col]], na.rm=na.rm)
+        )
+      },
+      measurevar
+    )
+
+    # Rename the "mean" column    
+    datac <- rename(datac, c("mean" = measurevar))
+
+    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+
+    # Confidence interval multiplier for standard error
+    # Calculate t-statistic for confidence interval: 
+    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+    datac$ci <- datac$se * ciMult
+
+    return(datac)
+}
+```
+
+data wrangling
+```{r}
+
+
+```
+
+defining plotting parameters
+```{r}
+plot_theme <- list(theme(panel.background = element_rect(fill = "white"),
+        axis.line = element_line(size = 0.46686234423, linetype = "solid", color = "black"),
+        axis.ticks = element_line(size = 0.46686234423, color = "black"),
+        axis.text = element_text(size = 9, color = "black"),
+        axis.title = element_text(size = 9),
+        legend.position = "none",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.size = unit(.5,"line"),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        strip.text = element_text(size = 9, face = "bold"),
+        axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=0.5)
+        ))
+```
+
+plotting
+```{r}
+df_plot <- df %>% filter(plate == 1)
+df_summary <- summarySE(df_plot, measurevar = "angle", groupvars = c("genotype","timepoint"))
+
+p_line <- ggplot(df_summary, aes(x = timepoint, y = angle, color = genotype)) +
+  geom_line() +
+  geom_errorbar(aes(ymin=angle-se, ymax=angle+se), width=.1) +
+  plot_theme +
+  ylab("hook angle in degrees") +
+  xlab("duration of light exposure in h") +
+  ylim(0,180) +
+  scale_x_continuous(breaks = c(0,6,12,24))
+  ggtitle("apical hook opening")
+
+p_line
+```
+Boxplot of TAF15b & WT
+```{r}
+df_plot <- df %>% filter(genotype == "WT" | genotype =="TAF15b", timepoint == 0)
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "TAF15b"),
+                           labels = c("WT", "taf15b"))
+
+p <- ggplot(df_plot, aes(x = genotype, y = angle)) +
+  geom_boxplot(fill = "skyblue") +
+  ggtitle(" darkness") +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") +
+  xlab("") +
+  ylab("apical hook angle in degrees") +
+  plot_theme
+
+p
+
+pdf("TAF15b_hook_darkness.pdf", width = 1.5, height = 2 ) 
+plot(p)
+dev.off()
+
+```
+
