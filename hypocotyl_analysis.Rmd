@@ -1,0 +1,337 @@
+---
+title: "hypocotyl analysis"
+output: html_notebook
+---
+loading packages
+```{r}
+library(readxl)
+library(ggpubr)
+library(tidyverse)
+library(rstatix)
+library(cowplot)
+```
+
+loading data
+```{r}
+df <- read_excel("20210322_results.xlsx")
+```
+
+wrangling data
+```{r}
+
+```
+
+Setting plot parameters
+```{r}
+plot_theme <- list(theme(panel.background = element_rect(fill = "white"),
+        axis.line = element_line(size = 0.46686234423, linetype = "solid", color = "black"),
+        axis.ticks = element_line(size = 0.46686234423, color = "black"),
+        axis.text = element_text(size = 9, color = "black"),
+        axis.title = element_text(size = 9),
+        legend.position = "none",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 9),
+        legend.key.size = unit(.5,"line"),
+        plot.title = element_text(face = "bold", hjust = 0.5),
+        strip.text = element_text(size = 9, face = "bold"),
+        axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=0.5)
+        ))
+```
+
+Plotting WT in different conditions
+```{r}
+df_plot <- df %>% filter(plate == 4)
+
+p <- ggplot(df_plot, aes(x = condition, y = length_cm)) +
+  geom_boxplot(outlier.shape =  NA) +
+  geom_point(shape = 21, alpha = 0.5, color= "black", fill = "black") +
+  plot_theme +
+  ggtitle("WT in white light 150 umol") +
+  ylab("length in cm") +
+  xlab("row on plate") +
+  ylim(0,0.18) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "1") 
+
+p
+
+pdf("WT_vertical_plate.pdf", width = 8, height = 4.5 ) 
+plot(p)
+dev.off()
+```
+Plotting phenotypes for homozygous lines
+```{r}
+df_plot <- df %>% filter(plate == 3, condition == "B")
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "CLPC1", "PAT1", "ZAP1"))
+
+p <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(fill = "#317ec2") +
+#  geom_point(aes(fill = condition),shape = 21, alpha = 0.5) +
+  plot_theme +
+  ggtitle("Homozygous lines in blue light") +
+  ylab("length in cm") +
+  xlab("") +
+  ylim(0,0.3) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") 
+
+p
+
+
+df_plot <- df %>% filter(plate == 3, condition == "D")
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "CLPC1", "PAT1", "ZAP1"))
+
+p2 <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(fill = "grey") +
+#  geom_point(aes(fill = condition),shape = 21, alpha = 0.5) +
+  plot_theme +
+  ggtitle("Homozygous lines in darkness") +
+  ylab("length in cm") +
+  xlab("") +
+  ylim(0,2) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") 
+
+p2
+
+pdf("hom_blue.pdf", width = 8, height = 4.5 ) 
+plot(p)
+dev.off()
+pdf("hom_dark.pdf", width = 8, height = 4.5 ) 
+plot(p2)
+dev.off()
+```
+
+Plotting phenotypes for HEMA1
+```{r}
+df_plot <- df %>% filter(plate == 1, condition == "B")
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "HEMA1"))
+
+p <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(fill = "#317ec2") +
+#  geom_point(aes(fill = condition),shape = 21, alpha = 0.5) +
+  plot_theme +
+  ggtitle("HEMA1 (all) in blue light") +
+  ylab("length in cm") +
+  xlab("") +
+  ylim(0,0.5) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") 
+
+p
+
+pdf("HEMA1_blue.pdf", width = 8, height = 4.5 ) 
+plot(p)
+dev.off()
+
+
+df_plot <- df %>% filter(plate == 1, condition == "D")
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "HEMA1"))
+
+p2 <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(fill = "grey") +
+#  geom_point(aes(fill = condition),shape = 21, alpha = 0.5) +
+  plot_theme +
+  ggtitle("HEMA1 (all) in darkness") +
+  ylab("length in cm") +
+  xlab("") +
+  ylim(0,2) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") 
+
+p2
+
+pdf("HEMA1_dark.pdf", width = 8, height = 4.5 ) 
+plot(p2)
+dev.off()
+
+### HEMA1 pale
+df_plot <- df %>% filter(plate == 1, condition == "D", genotype != "HEMA1" | color != "green")
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "HEMA1"))
+
+p3 <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(fill = "grey") +
+#  geom_point(aes(fill = condition),shape = 21, alpha = 0.5) +
+  plot_theme +
+  ggtitle("HEMA1 (pale) in darkness") +
+  ylab("length in cm") +
+  xlab("") +
+  ylim(0,2) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") 
+
+p3
+
+
+pdf("HEMA1_pale_dark.pdf", width = 8, height = 4.5 ) 
+plot(p3)
+dev.off()
+
+df_plot <- df %>% filter(plate == 1, condition == "B", genotype != "HEMA1" | color != "green")
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "HEMA1"))
+
+p4 <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(fill = "#317ec2") +
+#  geom_point(aes(fill = condition),shape = 21, alpha = 0.5) +
+  plot_theme +
+  ggtitle("HEMA1 (pale) in blue light") +
+  ylab("length in cm") +
+  xlab("") +
+  ylim(0,0.3) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") 
+
+p4
+
+pdf("HEMA1_pale_blue.pdf", width = 8, height = 4.5 ) 
+plot(p4)
+dev.off()
+
+df_plot <- df %>% filter(plate == 1, condition == "B", genotype != "HEMA1" | color != "pale")
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "HEMA1"))
+
+p5 <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(fill = "#317ec2") +
+#  geom_point(aes(fill = condition),shape = 21, alpha = 0.5) +
+  plot_theme +
+  ggtitle("HEMA1 (green) in blue light") +
+  ylab("length in cm") +
+  xlab("") +
+  ylim(0,0.3) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") 
+
+p5
+
+pdf("HEMA1_green_blue.pdf", width = 8, height = 4.5 ) 
+plot(p5)
+dev.off()
+```
+
+Plotting phenotypes ALB3
+```{r}
+df_plot <- df %>% filter(plate == 2, condition == "B")
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "ALB3"))
+
+p <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(fill = "#317ec2") +
+#  geom_point(aes(fill = condition),shape = 21, alpha = 0.5) +
+  plot_theme +
+  ggtitle("ALB3 (all) in blue light") +
+  ylab("length in cm") +
+  xlab("") +
+  ylim(0,0.3) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") 
+
+p
+
+pdf("ALB3_blue.pdf", width = 8, height = 4.5 ) 
+plot(p)
+dev.off()
+
+df_plot <- df %>% filter(plate == 2, condition == "D")
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "ALB3"))
+
+p <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(fill = "grey") +
+#  geom_point(aes(fill = condition),shape = 21, alpha = 0.5) +
+  plot_theme +
+  ggtitle("ALB3 (all) in darkness") +
+  ylab("length in cm") +
+  xlab("") +
+  ylim(0,2) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") 
+
+p
+
+pdf("ALB3_dark.pdf", width = 8, height = 4.5 ) 
+plot(p)
+dev.off()
+
+df_plot <- df %>% filter(plate == 2, condition == "B", genotype != "ALB3" | color != "green")
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "ALB3"))
+
+p <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(fill = "#317ec2") +
+#  geom_point(aes(fill = condition),shape = 21, alpha = 0.5) +
+  plot_theme +
+  ggtitle("ALB3 (pale) in blue light") +
+  ylab("length in cm") +
+  xlab("") +
+  ylim(0,0.3) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") 
+
+p
+
+pdf("ALB3_pale_blue.pdf", width = 8, height = 4.5 ) 
+plot(p)
+dev.off()
+
+df_plot <- df %>% filter(plate == 2, condition == "D", genotype != "ALB3" | color != "pale")
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "ALB3"))
+
+p <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(fill = "grey") +
+#  geom_point(aes(fill = condition),shape = 21, alpha = 0.5) +
+  plot_theme +
+  ggtitle("ALB3 (green) in darkness") +
+  ylab("length in cm") +
+  xlab("") +
+  ylim(0,2) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") 
+
+p
+
+pdf("ALB3_green_dark.pdf", width = 8, height = 4.5 ) 
+plot(p)
+dev.off()
+
+df_plot <- df %>% filter(plate == 2, condition == "D", genotype != "ALB3" | color != "green")
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "ALB3"))
+
+p <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(fill = "grey") +
+#  geom_point(aes(fill = condition),shape = 21, alpha = 0.5) +
+  plot_theme +
+  ggtitle("ALB3 (pale) in darkness") +
+  ylab("length in cm") +
+  xlab("") +
+  ylim(0,2) +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") 
+
+p
+
+pdf("ALB3_pale_dark.pdf", width = 8, height = 4.5 ) 
+plot(p)
+dev.off()
+```
+Plotting CLPC1 in B
+```{r}
+df_plot <- df %>% filter(genotype == "WT" | genotype == "CLPC1", condition == "B")
+
+#df_plot <- df_plot %>% mutate(genotype = (fct_reorder(genotype, desc(genotype))))
+
+df_plot$genotype <- factor(df_plot$genotype, levels = c("WT", "CLPC1"))
+
+ymax <- 1.1*max(df_plot$length_cm)
+
+p <- ggplot(df_plot, aes(x = genotype, y = length_cm)) +
+  geom_boxplot(outlier.shape = NA,
+               fill = "skyblue") +
+  stat_compare_means(method = "t.test", label = "p.signif", ref.group = "WT") +
+  ylab("hypocotyl length in cm") +
+  xlab("") +
+  ylim(0,ymax) +
+  ggtitle("blue light") +
+  plot_theme
+p
+
+pdf("CLCP1_hypocotyl_blue.pdf", width = 1.5, height = 2 ) 
+plot(p)
+dev.off()
+```
+
