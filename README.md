@@ -1,2 +1,2 @@
 # phenotype_analysis
-tools and scripts to analyze and visualize phenotypes
+Small collection of personal tools and scripts to analyze and visualize phenotypes.
